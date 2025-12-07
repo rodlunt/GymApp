@@ -1,38 +1,82 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { useWorkout } from '../../context/WorkoutContext';
-import { spacing, fontSize } from '../../theme';
+import { spacing, fontSize, borderRadius } from '../../theme';
+import { STARTER_ROUTINES } from '../../data/starterRoutines';
 
 export default function RoutineListScreen({ navigation }) {
   const { colors } = useTheme();
-  const { routines } = useWorkout();
+  const { routines, addRoutine } = useWorkout();
+
+  const useTemplate = async (template) => {
+    const newRoutine = {
+      ...template,
+      id: Date.now().toString(),
+      name: template.name,
+    };
+    await addRoutine(newRoutine);
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.text }]}>Routines</Text>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.text }]}>Routines</Text>
+        <TouchableOpacity
+          style={[styles.addButton, { backgroundColor: colors.primary }]}
+          onPress={() => navigation.navigate('CreateRoutine')}
+        >
+          <Text style={styles.addButtonText}>+</Text>
+        </TouchableOpacity>
+      </View>
       <ScrollView style={styles.scrollView}>
-        {routines.length === 0 ? (
-          <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No routines yet. Create your first routine to get started.
+        {routines.length > 0 && (
+          <>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+              MY ROUTINES
             </Text>
-          </View>
-        ) : (
-          routines.map(routine => (
-            <View
-              key={routine.id}
-              style={[styles.routineCard, { backgroundColor: colors.card }]}
-            >
-              <Text style={[styles.routineName, { color: colors.text }]}>
-                {routine.name}
-              </Text>
-              <Text style={[styles.routineInfo, { color: colors.textSecondary }]}>
-                {routine.days.length} day{routine.days.length !== 1 ? 's' : ''}
-              </Text>
-            </View>
-          ))
+            {routines.map(routine => (
+              <TouchableOpacity
+                key={routine.id}
+                style={[styles.routineCard, { backgroundColor: colors.card }]}
+              >
+                <Text style={[styles.routineName, { color: colors.text }]}>
+                  {routine.name}
+                </Text>
+                <Text style={[styles.routineInfo, { color: colors.textSecondary }]}>
+                  {routine.days.length} day{routine.days.length !== 1 ? 's' : ''}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </>
         )}
+
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: routines.length > 0 ? spacing.lg : 0 }]}>
+          STARTER TEMPLATES
+        </Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+          Tap to add to your routines
+        </Text>
+        {STARTER_ROUTINES.map(template => (
+          <TouchableOpacity
+            key={template.id}
+            style={[styles.templateCard, { backgroundColor: colors.card, borderColor: colors.primary }]}
+            onPress={() => useTemplate(template)}
+          >
+            <View style={styles.templateHeader}>
+              <Text style={[styles.routineName, { color: colors.text }]}>
+                {template.name}
+              </Text>
+              <Text style={[styles.useButton, { color: colors.primary }]}>+ Add</Text>
+            </View>
+            <Text style={[styles.templateDesc, { color: colors.textSecondary }]}>
+              {template.description}
+            </Text>
+            <Text style={[styles.routineInfo, { color: colors.textSecondary }]}>
+              {template.days.length} day{template.days.length !== 1 ? 's' : ''} • {template.days.reduce((sum, d) => sum + d.exercises.length, 0)} exercises
+            </Text>
+          </TouchableOpacity>
+        ))}
       </ScrollView>
     </View>
   );
@@ -43,28 +87,66 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: spacing.lg,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.xl,
+    marginBottom: spacing.lg,
+  },
   title: {
     fontSize: fontSize.xxxl,
     fontWeight: '700',
-    marginTop: spacing.xl,
-    marginBottom: spacing.lg,
+  },
+  addButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '600',
   },
   scrollView: {
     flex: 1,
   },
-  emptyState: {
-    padding: spacing.lg,
-    borderRadius: 12,
-    alignItems: 'center',
+  sectionTitle: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    marginBottom: spacing.xs,
+    letterSpacing: 0.5,
   },
-  emptyText: {
-    fontSize: fontSize.md,
-    textAlign: 'center',
+  sectionSubtitle: {
+    fontSize: fontSize.sm,
+    marginBottom: spacing.md,
   },
   routineCard: {
     padding: spacing.lg,
     borderRadius: 12,
     marginBottom: spacing.md,
+  },
+  templateCard: {
+    padding: spacing.lg,
+    borderRadius: 12,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+  },
+  templateHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  templateDesc: {
+    fontSize: fontSize.sm,
+    marginTop: spacing.xs,
+  },
+  useButton: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
   },
   routineName: {
     fontSize: fontSize.lg,

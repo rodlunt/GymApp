@@ -8,7 +8,7 @@ export default function HomeScreen({ navigation }) {
   const { colors } = useTheme();
 
   const handleStartWorkout = () => {
-    // TODO: Navigate to active workout or show routine selection
+    navigation.navigate('ActiveWorkout');
   };
 
   return (

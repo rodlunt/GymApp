@@ -3,10 +3,10 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 
-import { HomeScreen } from '../screens/WorkoutTab';
-import { RoutineListScreen } from '../screens/RoutinesTab';
+import WorkoutStack from './WorkoutStack';
+import RoutinesStack from './RoutinesStack';
+import SettingsStack from './SettingsStack';
 import { ProgressScreen } from '../screens/ProgressTab';
-import { SettingsScreen } from '../screens/SettingsTab';
 
 const Tab = createBottomTabNavigator();
 
@@ -40,7 +40,7 @@ export default function TabNavigator() {
     >
       <Tab.Screen
         name="Workout"
-        component={HomeScreen}
+        component={WorkoutStack}
         options={{
           tabBarIcon: ({ focused, color }) => (
             <TabIcon name="Workout" focused={focused} color={color} />
@@ -49,7 +49,7 @@ export default function TabNavigator() {
       />
       <Tab.Screen
         name="Routines"
-        component={RoutineListScreen}
+        component={RoutinesStack}
         options={{
           tabBarIcon: ({ focused, color }) => (
             <TabIcon name="Routines" focused={focused} color={color} />
@@ -67,7 +67,7 @@ export default function TabNavigator() {
       />
       <Tab.Screen
         name="Settings"
-        component={SettingsScreen}
+        component={SettingsStack}
         options={{
           tabBarIcon: ({ focused, color }) => (
             <TabIcon name="Settings" focused={focused} color={color} />
