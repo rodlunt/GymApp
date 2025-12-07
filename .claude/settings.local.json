@@ -10,7 +10,16 @@
       "Bash(gh auth status:*)",
       "Bash(git --version:*)",
       "Bash(where:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(netstat:*)",
+      "Bash(claude mcp list:*)",
+      "Bash(claude mcp add)",
+      "Bash(npm start)"
     ],
     "deny": [],
     "ask": []
