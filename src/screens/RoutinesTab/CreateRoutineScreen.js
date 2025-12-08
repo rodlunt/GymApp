@@ -1,15 +1,47 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Modal, FlatList } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { useWorkout } from '../../context/WorkoutContext';
+import { useExercises } from '../../context/ExerciseContext';
+import { useGymProfile } from '../../context/GymProfileContext';
 import { spacing, fontSize, borderRadius } from '../../theme';
-import Button from '../../components/common/Button';
 
 export default function CreateRoutineScreen({ navigation }) {
   const { colors } = useTheme();
   const { addRoutine } = useWorkout();
+  const { muscleGroups, filterExercises } = useExercises();
+  const { gymProfiles, activeProfileId } = useGymProfile();
+
   const [routineName, setRoutineName] = useState('');
+  const [selectedGymId, setSelectedGymId] = useState(activeProfileId || null);
   const [days, setDays] = useState([{ id: '1', name: '', exercises: [] }]);
+
+  // Exercise picker state
+  const [showExercisePicker, setShowExercisePicker] = useState(false);
+  const [activeDayId, setActiveDayId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMuscle, setSelectedMuscle] = useState(null);
+
+  // Get equipment from selected gym profile
+  const selectedGym = gymProfiles.find(g => g.id === selectedGymId);
+  const availableEquipment = selectedGym?.equipment || [];
+
+  // Filter exercises based on search, muscle, and equipment
+  const filteredExercises = useMemo(() => {
+    let filtered = filterExercises({
+      query: searchQuery,
+      muscle: selectedMuscle,
+    });
+
+    // Filter by gym equipment if a gym is selected
+    if (availableEquipment.length > 0) {
+      filtered = filtered.filter(ex =>
+        ex.equipment.every(eq => availableEquipment.includes(eq) || eq === 'bodyweight')
+      );
+    }
+
+    return filtered;
+  }, [searchQuery, selectedMuscle, availableEquipment, filterExercises]);
 
   const addDay = () => {
     setDays([...days, { id: Date.now().toString(), name: '', exercises: [] }]);
@@ -25,25 +57,42 @@ export default function CreateRoutineScreen({ navigation }) {
     }
   };
 
-  const addExercise = (dayId) => {
+  const openExercisePicker = (dayId) => {
+    setActiveDayId(dayId);
+    setSearchQuery('');
+    setSelectedMuscle(null);
+    setShowExercisePicker(true);
+  };
+
+  const selectExercise = (exercise) => {
     setDays(days.map(d => {
-      if (d.id === dayId) {
+      if (d.id === activeDayId) {
+        // Check if exercise already exists
+        if (d.exercises.some(ex => ex.exerciseId === exercise.id)) {
+          return d;
+        }
         return {
           ...d,
-          exercises: [...d.exercises, { id: Date.now().toString(), name: '', sets: 3 }],
+          exercises: [...d.exercises, {
+            id: Date.now().toString(),
+            exerciseId: exercise.id,
+            name: exercise.name,
+            sets: 3,
+          }],
         };
       }
       return d;
     }));
+    setShowExercisePicker(false);
   };
 
-  const updateExercise = (dayId, exerciseId, field, value) => {
+  const updateExerciseSets = (dayId, exerciseId, sets) => {
     setDays(days.map(d => {
       if (d.id === dayId) {
         return {
           ...d,
           exercises: d.exercises.map(ex =>
-            ex.id === exerciseId ? { ...ex, [field]: value } : ex
+            ex.id === exerciseId ? { ...ex, sets: parseInt(sets) || 3 } : ex
           ),
         };
       }
@@ -71,13 +120,14 @@ export default function CreateRoutineScreen({ navigation }) {
     const routine = {
       id: Date.now().toString(),
       name: routineName.trim(),
+      gymProfileId: selectedGymId,
       days: days.map(d => ({
         id: d.id,
         name: d.name.trim() || `Day ${days.indexOf(d) + 1}`,
         exercises: d.exercises.map(ex => ({
-          exerciseId: ex.id,
-          name: ex.name.trim(),
-          sets: parseInt(ex.sets) || 3,
+          exerciseId: ex.exerciseId,
+          name: ex.name,
+          sets: ex.sets,
         })),
       })),
     };
@@ -85,6 +135,25 @@ export default function CreateRoutineScreen({ navigation }) {
     await addRoutine(routine);
     navigation.goBack();
   };
+
+  const renderExerciseItem = ({ item }) => (
+    <TouchableOpacity
+      style={[styles.exercisePickerItem, { borderBottomColor: colors.border }]}
+      onPress={() => selectExercise(item)}
+    >
+      <View style={styles.exercisePickerInfo}>
+        <Text style={[styles.exercisePickerName, { color: colors.text }]}>
+          {item.name}
+        </Text>
+        <Text style={[styles.exercisePickerMuscle, { color: colors.textSecondary }]}>
+          {item.primaryMuscles.join(', ')}
+        </Text>
+      </View>
+      <Text style={[styles.exercisePickerDifficulty, { color: colors.primary }]}>
+        {item.difficulty}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -108,6 +177,45 @@ export default function CreateRoutineScreen({ navigation }) {
           onChangeText={setRoutineName}
         />
 
+        {gymProfiles.length > 0 && (
+          <>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Gym Profile (Optional)</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.gymPicker}>
+              <TouchableOpacity
+                style={[
+                  styles.gymChip,
+                  { backgroundColor: !selectedGymId ? colors.primary : colors.card },
+                ]}
+                onPress={() => setSelectedGymId(null)}
+              >
+                <Text style={[
+                  styles.gymChipText,
+                  { color: !selectedGymId ? '#FFFFFF' : colors.text },
+                ]}>
+                  All Equipment
+                </Text>
+              </TouchableOpacity>
+              {gymProfiles.map(gym => (
+                <TouchableOpacity
+                  key={gym.id}
+                  style={[
+                    styles.gymChip,
+                    { backgroundColor: selectedGymId === gym.id ? colors.primary : colors.card },
+                  ]}
+                  onPress={() => setSelectedGymId(gym.id)}
+                >
+                  <Text style={[
+                    styles.gymChipText,
+                    { color: selectedGymId === gym.id ? '#FFFFFF' : colors.text },
+                  ]}>
+                    {gym.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </>
+        )}
+
         {days.map((day, dayIndex) => (
           <View key={day.id} style={[styles.dayCard, { backgroundColor: colors.card }]}>
             <View style={styles.dayHeader}>
@@ -127,19 +235,15 @@ export default function CreateRoutineScreen({ navigation }) {
 
             {day.exercises.map((exercise) => (
               <View key={exercise.id} style={[styles.exerciseRow, { borderTopColor: colors.border }]}>
-                <TextInput
-                  style={[styles.exerciseInput, { color: colors.text }]}
-                  placeholder="Exercise name"
-                  placeholderTextColor={colors.placeholder}
-                  value={exercise.name}
-                  onChangeText={(text) => updateExercise(day.id, exercise.id, 'name', text)}
-                />
+                <Text style={[styles.exerciseName, { color: colors.text }]} numberOfLines={1}>
+                  {exercise.name}
+                </Text>
                 <View style={styles.setsContainer}>
                   <TextInput
                     style={[styles.setsInput, { backgroundColor: colors.background, color: colors.text }]}
                     keyboardType="numeric"
                     value={exercise.sets.toString()}
-                    onChangeText={(text) => updateExercise(day.id, exercise.id, 'sets', text)}
+                    onChangeText={(text) => updateExerciseSets(day.id, exercise.id, text)}
                   />
                   <Text style={[styles.setsLabel, { color: colors.textSecondary }]}>sets</Text>
                 </View>
@@ -151,7 +255,7 @@ export default function CreateRoutineScreen({ navigation }) {
 
             <TouchableOpacity
               style={styles.addExerciseButton}
-              onPress={() => addExercise(day.id)}
+              onPress={() => openExercisePicker(day.id)}
             >
               <Text style={[styles.addExerciseText, { color: colors.primary }]}>+ Add Exercise</Text>
             </TouchableOpacity>
@@ -165,6 +269,81 @@ export default function CreateRoutineScreen({ navigation }) {
           <Text style={[styles.addDayText, { color: colors.primary }]}>+ Add Day</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Exercise Picker Modal */}
+      <Modal
+        visible={showExercisePicker}
+        animationType="slide"
+        onRequestClose={() => setShowExercisePicker(false)}
+      >
+        <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setShowExercisePicker(false)}>
+              <Text style={[styles.modalCancel, { color: colors.error }]}>Cancel</Text>
+            </TouchableOpacity>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Select Exercise</Text>
+            <View style={{ width: 50 }} />
+          </View>
+
+          <TextInput
+            style={[styles.searchInput, { backgroundColor: colors.card, color: colors.text }]}
+            placeholder="Search exercises..."
+            placeholderTextColor={colors.placeholder}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.muscleFilter}
+          >
+            <TouchableOpacity
+              style={[
+                styles.muscleChip,
+                { backgroundColor: !selectedMuscle ? colors.primary : colors.card },
+              ]}
+              onPress={() => setSelectedMuscle(null)}
+            >
+              <Text style={[
+                styles.muscleChipText,
+                { color: !selectedMuscle ? '#FFFFFF' : colors.text },
+              ]}>
+                All
+              </Text>
+            </TouchableOpacity>
+            {muscleGroups.map(muscle => (
+              <TouchableOpacity
+                key={muscle}
+                style={[
+                  styles.muscleChip,
+                  { backgroundColor: selectedMuscle === muscle ? colors.primary : colors.card },
+                ]}
+                onPress={() => setSelectedMuscle(muscle)}
+              >
+                <Text style={[
+                  styles.muscleChipText,
+                  { color: selectedMuscle === muscle ? '#FFFFFF' : colors.text },
+                ]}>
+                  {muscle.charAt(0).toUpperCase() + muscle.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <FlatList
+            data={filteredExercises}
+            keyExtractor={(item) => item.id}
+            renderItem={renderExerciseItem}
+            style={styles.exerciseList}
+            ListEmptyComponent={
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No exercises found
+              </Text>
+            }
+          />
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -206,6 +385,19 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     marginBottom: spacing.lg,
   },
+  gymPicker: {
+    marginBottom: spacing.lg,
+  },
+  gymChip: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    marginRight: spacing.sm,
+  },
+  gymChipText: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+  },
   dayCard: {
     borderRadius: borderRadius.lg,
     padding: spacing.md,
@@ -231,7 +423,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderTopWidth: 1,
   },
-  exerciseInput: {
+  exerciseName: {
     flex: 1,
     fontSize: fontSize.md,
   },
@@ -273,5 +465,75 @@ const styles = StyleSheet.create({
   addDayText: {
     fontSize: fontSize.md,
     fontWeight: '600',
+  },
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.lg,
+    paddingTop: spacing.xl + spacing.lg,
+  },
+  modalTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+  },
+  modalCancel: {
+    fontSize: fontSize.md,
+  },
+  searchInput: {
+    margin: spacing.lg,
+    marginTop: 0,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    fontSize: fontSize.md,
+  },
+  muscleFilter: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  muscleChip: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    marginRight: spacing.sm,
+  },
+  muscleChipText: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+  },
+  exerciseList: {
+    flex: 1,
+    paddingHorizontal: spacing.lg,
+  },
+  exercisePickerItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+  },
+  exercisePickerInfo: {
+    flex: 1,
+  },
+  exercisePickerName: {
+    fontSize: fontSize.md,
+    fontWeight: '500',
+  },
+  exercisePickerMuscle: {
+    fontSize: fontSize.sm,
+    marginTop: 2,
+  },
+  exercisePickerDifficulty: {
+    fontSize: fontSize.xs,
+    fontWeight: '500',
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginTop: spacing.xl,
+    fontSize: fontSize.md,
   },
 });

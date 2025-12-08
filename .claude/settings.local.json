@@ -19,7 +19,10 @@
       "Bash(netstat:*)",
       "Bash(claude mcp list:*)",
       "Bash(claude mcp add)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(cd /d d:GymApp)",
+      "Bash(npm start -- --clear)",
+      "Bash(npx expo start:*)"
     ],
     "deny": [],
     "ask": []

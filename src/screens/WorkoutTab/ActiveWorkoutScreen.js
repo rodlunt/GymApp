@@ -1,28 +1,93 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Modal, Image, ActivityIndicator } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
+import { useWorkout } from '../../context/WorkoutContext';
+import { useExercises } from '../../context/ExerciseContext';
+import { useSettings } from '../../context/SettingsContext';
 import { spacing, fontSize, borderRadius } from '../../theme';
-import Button from '../../components/common/Button';
 
-// Demo exercises for testing
+// Demo exercises for quick start without routine
 const DEMO_EXERCISES = [
   { id: '1', name: 'Bench Press', sets: 3 },
   { id: '2', name: 'Squat', sets: 3 },
   { id: '3', name: 'Deadlift', sets: 3 },
 ];
 
+const calculate1RM = (weight, reps) => {
+  if (!weight || !reps || reps <= 0) return 0;
+  return Math.round(weight * (1 + reps / 30) * 10) / 10;
+};
+
 export default function ActiveWorkoutScreen({ navigation, route }) {
   const { colors } = useTheme();
+  const { workoutHistory, saveWorkoutSession, personalBests } = useWorkout();
+  const { getExerciseById } = useExercises();
+  const { units, displayWeight, toStorageWeight } = useSettings();
+  const routine = route.params?.routine;
+  const day = route.params?.day;
+  const [startTime] = useState(Date.now());
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+
+  // Get exercises from routine day or use demo exercises
+  const exercises = useMemo(() => {
+    if (day?.exercises && day.exercises.length > 0) {
+      return day.exercises.map(ex => ({
+        id: ex.exerciseId || ex.id,
+        name: ex.name,
+        sets: ex.sets || 3,
+      }));
+    }
+    return DEMO_EXERCISES;
+  }, [day]);
+
+  // Get previous session data for this routine/day
+  const previousSession = useMemo(() => {
+    if (!routine || !day) return null;
+    const sessions = workoutHistory
+      .filter(s => s.routineId === routine.id && s.dayId === day.id)
+      .sort((a, b) => b.date - a.date);
+    return sessions[0] || null;
+  }, [workoutHistory, routine, day]);
+
+  // Get previous values for an exercise
+  const getPreviousValues = (exerciseId, exerciseName) => {
+    if (!previousSession) return null;
+    const prevEx = previousSession.exercises?.find(
+      e => e.exerciseId === exerciseId || e.name === exerciseName
+    );
+    return prevEx?.sets || null;
+  };
+
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [workoutData, setWorkoutData] = useState(
-    DEMO_EXERCISES.map(ex => ({
+    exercises.map(ex => ({
       exerciseId: ex.id,
       name: ex.name,
-      sets: Array(ex.sets).fill({ weight: '', reps: '' }),
+      sets: Array(ex.sets).fill(null).map(() => ({ weight: '', reps: '' })),
     }))
   );
 
   const currentExercise = workoutData[currentExerciseIndex];
+  const previousValues = getPreviousValues(currentExercise.exerciseId, currentExercise.name);
+
+  // Get full exercise data from database (includes image if available)
+  const exerciseData = getExerciseById(currentExercise.exerciseId);
+
+  // Calculate current best 1RM for this exercise from entered data
+  const currentBest1RM = useMemo(() => {
+    let best = 0;
+    currentExercise.sets.forEach(set => {
+      if (set.weight && set.reps) {
+        const rm = calculate1RM(parseFloat(set.weight), parseInt(set.reps));
+        if (rm > best) best = rm;
+      }
+    });
+    return best;
+  }, [currentExercise.sets]);
+
+  // Get stored PR for this exercise
+  const storedPR = personalBests[currentExercise.exerciseId] || personalBests[currentExercise.name];
 
   const updateSet = (setIndex, field, value) => {
     const newData = [...workoutData];
@@ -44,64 +109,127 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     }
   };
 
-  const finishWorkout = () => {
+  const finishWorkout = async () => {
     // Calculate summary
     let totalSets = 0;
     let totalVolume = 0;
+    let newPRs = 0;
+
     workoutData.forEach(ex => {
+      let exerciseBest1RM = 0;
       ex.sets.forEach(set => {
         if (set.weight && set.reps) {
           totalSets++;
-          totalVolume += parseFloat(set.weight) * parseInt(set.reps);
+          // Convert display weight to kg for storage
+          const weightInKg = toStorageWeight(parseFloat(set.weight));
+          const reps = parseInt(set.reps);
+          totalVolume += weightInKg * reps;
+          const rm = calculate1RM(weightInKg, reps);
+          if (rm > exerciseBest1RM) exerciseBest1RM = rm;
         }
       });
+      // Check if this beats the stored PR
+      const storedPR = personalBests[ex.exerciseId] || personalBests[ex.name];
+      if (exerciseBest1RM > 0 && (!storedPR || exerciseBest1RM > storedPR.estimated1RM)) {
+        newPRs++;
+      }
     });
+
+    // Save workout session (weights stored in kg)
+    const session = {
+      id: Date.now().toString(),
+      routineId: routine?.id || null,
+      dayId: day?.id || null,
+      date: Date.now(),
+      duration: Date.now() - startTime,
+      exercises: workoutData.map(ex => ({
+        exerciseId: ex.exerciseId,
+        name: ex.name,
+        sets: ex.sets.filter(s => s.weight && s.reps).map(s => ({
+          weight: toStorageWeight(parseFloat(s.weight)),
+          reps: parseInt(s.reps),
+        })),
+      })),
+    };
+
+    await saveWorkoutSession(session);
 
     navigation.replace('WorkoutSummary', {
       exerciseCount: workoutData.length,
       totalSets,
       totalVolume: Math.round(totalVolume),
+      newPRs,
+      duration: session.duration,
     });
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
+        {routine && day && (
+          <Text style={[styles.routineInfo, { color: colors.primary }]}>
+            {routine.name} - {day.name}
+          </Text>
+        )}
         <Text style={[styles.exerciseNumber, { color: colors.textSecondary }]}>
           Exercise {currentExerciseIndex + 1} of {workoutData.length}
         </Text>
-        <Text style={[styles.exerciseName, { color: colors.text }]}>
-          {currentExercise.name}
-        </Text>
+        <TouchableOpacity onPress={() => setShowImageModal(true)}>
+          <Text style={[styles.exerciseName, { color: colors.text }]}>
+            {currentExercise.name}
+          </Text>
+          <Text style={[styles.tapToView, { color: colors.textSecondary }]}>
+            Tap to view exercise
+          </Text>
+        </TouchableOpacity>
+        {(currentBest1RM > 0 || storedPR) && (
+          <Text style={[styles.oneRM, { color: colors.primary }]}>
+            Est. 1RM: {currentBest1RM > 0 ? `${displayWeight(currentBest1RM)}${units}` : '-'}
+            {storedPR && ` (PR: ${displayWeight(storedPR.estimated1RM)}${units})`}
+          </Text>
+        )}
       </View>
 
       <ScrollView style={styles.setsContainer}>
-        {currentExercise.sets.map((set, index) => (
-          <View key={index} style={[styles.setRow, { backgroundColor: colors.card }]}>
-            <Text style={[styles.setLabel, { color: colors.textSecondary }]}>
-              Set {index + 1}
-            </Text>
-            <View style={styles.inputGroup}>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                placeholder="kg"
-                placeholderTextColor={colors.placeholder}
-                keyboardType="numeric"
-                value={set.weight}
-                onChangeText={(value) => updateSet(index, 'weight', value)}
-              />
-              <Text style={[styles.inputSeparator, { color: colors.textSecondary }]}>x</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                placeholder="reps"
-                placeholderTextColor={colors.placeholder}
-                keyboardType="numeric"
-                value={set.reps}
-                onChangeText={(value) => updateSet(index, 'reps', value)}
-              />
+        {currentExercise.sets.map((set, index) => {
+          const prevSet = previousValues?.[index];
+          return (
+            <View key={index} style={[styles.setRow, { backgroundColor: colors.card }]}>
+              <Text style={[styles.setLabel, { color: colors.textSecondary }]}>
+                Set {index + 1}
+              </Text>
+              <View style={styles.inputGroup}>
+                <View style={styles.inputWrapper}>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                    placeholder={prevSet?.weight ? `${displayWeight(prevSet.weight)}` : units}
+                    placeholderTextColor={colors.placeholder}
+                    keyboardType="numeric"
+                    value={set.weight}
+                    onChangeText={(value) => updateSet(index, 'weight', value)}
+                  />
+                  {prevSet?.weight && !set.weight && (
+                    <Text style={[styles.prevHint, { color: colors.textSecondary }]}>prev</Text>
+                  )}
+                </View>
+                <Text style={[styles.inputSeparator, { color: colors.textSecondary }]}>x</Text>
+                <View style={styles.inputWrapper}>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                    placeholder={prevSet?.reps ? `${prevSet.reps}` : 'reps'}
+                    placeholderTextColor={colors.placeholder}
+                    keyboardType="numeric"
+                    value={set.reps}
+                    onChangeText={(value) => updateSet(index, 'reps', value)}
+                  />
+                  {prevSet?.reps && !set.reps && (
+                    <Text style={[styles.prevHint, { color: colors.textSecondary }]}>prev</Text>
+                  )}
+                </View>
+              </View>
             </View>
-          </View>
-        ))}
+          );
+        })}
       </ScrollView>
 
       <View style={styles.navigation}>
@@ -136,6 +264,74 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
       >
         <Text style={[styles.cancelText, { color: colors.error }]}>Cancel Workout</Text>
       </TouchableOpacity>
+
+      {/* Exercise Image Modal */}
+      <Modal
+        visible={showImageModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowImageModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.imageModalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowImageModal(false)}
+        >
+          <View style={[styles.imageModalContent, { backgroundColor: colors.card }]}>
+            <Text style={[styles.imageModalTitle, { color: colors.text }]}>
+              {currentExercise.name}
+            </Text>
+
+            {exerciseData?.image ? (
+              <View style={styles.imageContainer}>
+                {imageLoading && (
+                  <ActivityIndicator
+                    size="large"
+                    color={colors.primary}
+                    style={styles.imageLoader}
+                  />
+                )}
+                <Image
+                  source={{ uri: exerciseData.image }}
+                  style={styles.exerciseImage}
+                  resizeMode="contain"
+                  onLoadStart={() => setImageLoading(true)}
+                  onLoadEnd={() => setImageLoading(false)}
+                />
+              </View>
+            ) : (
+              <View style={[styles.imagePlaceholder, { backgroundColor: colors.background }]}>
+                <Text style={[styles.placeholderText, { color: colors.textSecondary }]}>
+                  No image available
+                </Text>
+              </View>
+            )}
+
+            {exerciseData && (
+              <View style={styles.exerciseDetails}>
+                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
+                  Primary: {exerciseData.primaryMuscles?.join(', ') || '-'}
+                </Text>
+                {exerciseData.secondaryMuscles?.length > 0 && (
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
+                    Secondary: {exerciseData.secondaryMuscles.join(', ')}
+                  </Text>
+                )}
+                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
+                  Equipment: {exerciseData.equipment?.join(', ') || '-'}
+                </Text>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={[styles.closeButton, { backgroundColor: colors.primary }]}
+              onPress={() => setShowImageModal(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -149,6 +345,11 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
     marginBottom: spacing.lg,
   },
+  routineInfo: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+    marginBottom: spacing.xs,
+  },
   exerciseNumber: {
     fontSize: fontSize.sm,
     marginBottom: spacing.xs,
@@ -156,6 +357,11 @@ const styles = StyleSheet.create({
   exerciseName: {
     fontSize: fontSize.xxl,
     fontWeight: '700',
+  },
+  oneRM: {
+    fontSize: fontSize.sm,
+    fontWeight: '300',
+    marginTop: spacing.xs,
   },
   setsContainer: {
     flex: 1,
@@ -177,6 +383,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  inputWrapper: {
+    alignItems: 'center',
+  },
   input: {
     width: 70,
     padding: spacing.sm,
@@ -184,6 +393,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     fontSize: fontSize.md,
     textAlign: 'center',
+  },
+  prevHint: {
+    fontSize: fontSize.xs,
+    marginTop: 2,
   },
   inputSeparator: {
     marginHorizontal: spacing.sm,
@@ -212,5 +425,72 @@ const styles = StyleSheet.create({
   },
   cancelText: {
     fontSize: fontSize.md,
+  },
+  tapToView: {
+    fontSize: fontSize.xs,
+    marginTop: spacing.xs,
+  },
+  imageModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  imageModalContent: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    alignItems: 'center',
+  },
+  imageModalTitle: {
+    fontSize: fontSize.xl,
+    fontWeight: '700',
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
+  imageContainer: {
+    width: '100%',
+    height: 250,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  exerciseImage: {
+    width: '100%',
+    height: '100%',
+  },
+  imageLoader: {
+    position: 'absolute',
+  },
+  imagePlaceholder: {
+    width: '100%',
+    height: 200,
+    borderRadius: borderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    fontSize: fontSize.md,
+  },
+  exerciseDetails: {
+    width: '100%',
+    marginTop: spacing.md,
+    gap: spacing.xs,
+  },
+  detailLabel: {
+    fontSize: fontSize.sm,
+    textTransform: 'capitalize',
+  },
+  closeButton: {
+    marginTop: spacing.lg,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.md,
+  },
+  closeButtonText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+    fontWeight: '600',
   },
 });

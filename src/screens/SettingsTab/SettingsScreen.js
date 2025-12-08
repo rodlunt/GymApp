@@ -1,12 +1,64 @@
-import React from 'react';
-import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { useTheme } from '../../context/ThemeContext';
 import { useGymProfile } from '../../context/GymProfileContext';
+import { useWorkout } from '../../context/WorkoutContext';
+import { useSettings } from '../../context/SettingsContext';
 import { spacing, fontSize, borderRadius } from '../../theme';
 
 export default function SettingsScreen({ navigation }) {
   const { colors, isDark, toggleTheme } = useTheme();
   const { gymProfiles, activeProfileId, setActiveProfile } = useGymProfile();
+  const { routines, workoutHistory, personalBests } = useWorkout();
+  const { units, toggleUnits } = useSettings();
+  const [isExporting, setIsExporting] = useState(false);
+
+  const exportData = async () => {
+    setIsExporting(true);
+    try {
+      const exportPayload = {
+        exportDate: new Date().toISOString(),
+        appVersion: '1.0.0',
+        data: {
+          gymProfiles,
+          routines,
+          workoutHistory,
+          personalBests,
+          settings: {
+            units,
+            isDark,
+            activeProfileId,
+          },
+        },
+      };
+
+      const fileName = `workout-data-${new Date().toISOString().split('T')[0]}.json`;
+      const filePath = `${FileSystem.documentDirectory}${fileName}`;
+
+      await FileSystem.writeAsStringAsync(
+        filePath,
+        JSON.stringify(exportPayload, null, 2),
+        { encoding: FileSystem.EncodingType.UTF8 }
+      );
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(filePath, {
+          mimeType: 'application/json',
+          dialogTitle: 'Export Workout Data',
+        });
+      } else {
+        Alert.alert('Export Complete', `Data saved to: ${filePath}`);
+      }
+    } catch (error) {
+      console.error('Export failed:', error);
+      Alert.alert('Export Failed', 'Could not export data. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -33,14 +85,29 @@ export default function SettingsScreen({ navigation }) {
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
           UNITS
         </Text>
-        <View style={[styles.settingRow, { backgroundColor: colors.card }]}>
+        <TouchableOpacity
+          style={[styles.settingRow, { backgroundColor: colors.card }]}
+          onPress={toggleUnits}
+        >
           <Text style={[styles.settingLabel, { color: colors.text }]}>
             Weight Unit
           </Text>
-          <Text style={[styles.settingValue, { color: colors.textSecondary }]}>
-            kg
-          </Text>
-        </View>
+          <View style={styles.unitToggle}>
+            <Text style={[
+              styles.unitOption,
+              { color: units === 'kg' ? colors.primary : colors.textSecondary }
+            ]}>
+              kg
+            </Text>
+            <Text style={[styles.unitSeparator, { color: colors.textSecondary }]}>/</Text>
+            <Text style={[
+              styles.unitOption,
+              { color: units === 'lbs' ? colors.primary : colors.textSecondary }
+            ]}>
+              lbs
+            </Text>
+          </View>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
@@ -101,13 +168,21 @@ export default function SettingsScreen({ navigation }) {
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
           DATA
         </Text>
-        <TouchableOpacity style={[styles.settingRow, { backgroundColor: colors.card }]}>
+        <TouchableOpacity
+          style={[styles.settingRow, { backgroundColor: colors.card }]}
+          onPress={exportData}
+          disabled={isExporting}
+        >
           <Text style={[styles.settingLabel, { color: colors.text }]}>
             Export Data
           </Text>
-          <Text style={[styles.chevron, { color: colors.textSecondary }]}>
-            {'>'}
-          </Text>
+          {isExporting ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <Text style={[styles.chevron, { color: colors.textSecondary }]}>
+              {'>'}
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -157,6 +232,18 @@ const styles = StyleSheet.create({
   },
   settingValue: {
     fontSize: fontSize.md,
+  },
+  unitToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  unitOption: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
+  unitSeparator: {
+    fontSize: fontSize.md,
+    marginHorizontal: spacing.xs,
   },
   chevron: {
     fontSize: fontSize.lg,
