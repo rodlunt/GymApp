@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import exerciseData from '../data/exercises.json';
+import wgerApi from '../services/wgerApi';
 
 const ExerciseContext = createContext();
 
@@ -7,6 +8,46 @@ export function ExerciseProvider({ children }) {
   const exercises = exerciseData.exercises;
   const muscleGroups = exerciseData.muscleGroups;
   const equipmentList = exerciseData.equipmentList;
+
+  // Image state
+  const [exerciseImages, setExerciseImages] = useState({});
+  const [loadingImages, setLoadingImages] = useState({});
+
+  // Fetch image for a single exercise
+  const getExerciseImage = useCallback(async (exerciseId) => {
+    // Return cached image if available
+    if (exerciseImages[exerciseId] !== undefined) {
+      return exerciseImages[exerciseId];
+    }
+
+    // Don't fetch if already loading
+    if (loadingImages[exerciseId]) {
+      return null;
+    }
+
+    setLoadingImages(prev => ({ ...prev, [exerciseId]: true }));
+
+    try {
+      const imageUrl = await wgerApi.getImageForExercise(exerciseId);
+      setExerciseImages(prev => ({ ...prev, [exerciseId]: imageUrl }));
+      return imageUrl;
+    } catch (error) {
+      console.log('Failed to fetch image:', error);
+      setExerciseImages(prev => ({ ...prev, [exerciseId]: null }));
+      return null;
+    } finally {
+      setLoadingImages(prev => ({ ...prev, [exerciseId]: false }));
+    }
+  }, [exerciseImages, loadingImages]);
+
+  // Prefetch images for multiple exercises
+  const prefetchImages = useCallback(async (exerciseIds) => {
+    const missing = exerciseIds.filter(id => exerciseImages[id] === undefined);
+    if (missing.length === 0) return;
+
+    const images = await wgerApi.getImagesForExercises(missing);
+    setExerciseImages(prev => ({ ...prev, ...images }));
+  }, [exerciseImages]);
 
   const getExerciseById = (id) => {
     return exercises.find(ex => ex.id === id);
@@ -69,6 +110,11 @@ export function ExerciseProvider({ children }) {
     getExercisesByEquipment,
     searchExercises,
     filterExercises,
+    // Image functions
+    exerciseImages,
+    loadingImages,
+    getExerciseImage,
+    prefetchImages,
   };
 
   return (

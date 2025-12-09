@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Modal, Image, ActivityIndicator, Animated } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { useWorkout } from '../../context/WorkoutContext';
@@ -9,9 +9,9 @@ import WeightRoller from '../../components/common/WeightRoller';
 
 // Demo exercises for quick start without routine
 const DEMO_EXERCISES = [
-  { id: '1', name: 'Bench Press', sets: 3 },
-  { id: '2', name: 'Squat', sets: 3 },
-  { id: '3', name: 'Deadlift', sets: 3 },
+  { id: '1', exerciseId: '1', name: 'Bench Press', sets: 3 },
+  { id: '2', exerciseId: '2', name: 'Squat', sets: 3 },
+  { id: '3', exerciseId: '3', name: 'Deadlift', sets: 3 },
 ];
 
 const calculate1RM = (weight, reps) => {
@@ -22,19 +22,21 @@ const calculate1RM = (weight, reps) => {
 export default function ActiveWorkoutScreen({ navigation, route }) {
   const { colors } = useTheme();
   const { workoutHistory, saveWorkoutSession, personalBests } = useWorkout();
-  const { getExerciseById } = useExercises();
+  const { getExerciseById, exerciseImages, getExerciseImage } = useExercises();
   const { units, displayWeight, toStorageWeight } = useSettings();
   const routine = route.params?.routine;
   const day = route.params?.day;
   const [startTime] = useState(Date.now());
   const [showImageModal, setShowImageModal] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+  const [fetchingImage, setFetchingImage] = useState(false);
 
   // Get exercises from routine day or use demo exercises
   const exercises = useMemo(() => {
     if (day?.exercises && day.exercises.length > 0) {
       return day.exercises.map(ex => ({
         id: ex.exerciseId || ex.id,
+        exerciseId: ex.exerciseId || ex.id,
         name: ex.name,
         sets: ex.sets || 3,
       }));
@@ -69,10 +71,24 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     return highRepSets >= Math.ceil(prevSets.length * 0.66);
   };
 
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const [workoutData, setWorkoutData] = useState(
+    exercises.map(ex => ({
+      exerciseId: ex.id,
+      name: ex.name,
+      sets: Array(ex.sets).fill(null).map(() => ({ weight: '', reps: '' })),
+    }))
+  );
+
+  const currentExercise = workoutData[currentExerciseIndex];
+
   // Throbbing animation for progression nudge
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
+  const isProgressionReady = currentExercise ? checkProgressionReady(currentExercise.exerciseId, currentExercise.name) : false;
+
   useEffect(() => {
+    if (!currentExercise) return;
     const isReady = checkProgressionReady(currentExercise.exerciseId, currentExercise.name);
     if (isReady) {
       const pulse = Animated.loop(
@@ -94,24 +110,35 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     } else {
       pulseAnim.setValue(1);
     }
-  }, [currentExerciseIndex]);
+  }, [currentExerciseIndex, currentExercise]);
 
-  const isProgressionReady = checkProgressionReady(currentExercise.exerciseId, currentExercise.name);
+  const previousValues = currentExercise ? getPreviousValues(currentExercise.exerciseId, currentExercise.name) : null;
 
-  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
-  const [workoutData, setWorkoutData] = useState(
-    exercises.map(ex => ({
-      exerciseId: ex.id,
-      name: ex.name,
-      sets: Array(ex.sets).fill(null).map(() => ({ weight: '', reps: '' })),
-    }))
-  );
+  // Get full exercise data from database
+  const exerciseData = currentExercise ? getExerciseById(currentExercise.exerciseId) : null;
 
-  const currentExercise = workoutData[currentExerciseIndex];
-  const previousValues = getPreviousValues(currentExercise.exerciseId, currentExercise.name);
+  // Get exercise image from wger.de
+  const currentExerciseId = currentExercise?.exerciseId;
+  const exerciseImageUrl = exerciseImages[currentExerciseId];
 
-  // Get full exercise data from database (includes image if available)
-  const exerciseData = getExerciseById(currentExercise.exerciseId);
+  // Fetch image when modal opens or exercise changes
+  useEffect(() => {
+    if (showImageModal && currentExerciseId && exerciseImageUrl === undefined) {
+      setFetchingImage(true);
+      getExerciseImage(currentExerciseId).finally(() => {
+        setFetchingImage(false);
+      });
+    }
+  }, [showImageModal, currentExerciseId, exerciseImageUrl, getExerciseImage]);
+
+  // Early return if no exercise data
+  if (!currentExercise) {
+    return (
+      <View style={[{ flex: 1, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text>No exercises found</Text>
+      </View>
+    );
+  }
 
   // Calculate current best 1RM for this exercise from entered data
   const currentBest1RM = useMemo(() => {
@@ -338,7 +365,14 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
               {currentExercise.name}
             </Text>
 
-            {exerciseData?.image ? (
+            {fetchingImage ? (
+              <View style={[styles.imagePlaceholder, { backgroundColor: colors.background }]}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={[styles.placeholderText, { color: colors.textSecondary, marginTop: spacing.sm }]}>
+                  Loading image...
+                </Text>
+              </View>
+            ) : exerciseImageUrl ? (
               <View style={styles.imageContainer}>
                 {imageLoading && (
                   <ActivityIndicator
@@ -348,7 +382,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                   />
                 )}
                 <Image
-                  source={{ uri: exerciseData.image }}
+                  source={{ uri: exerciseImageUrl }}
                   style={styles.exerciseImage}
                   resizeMode="contain"
                   onLoadStart={() => setImageLoading(true)}

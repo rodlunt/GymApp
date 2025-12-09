@@ -136,15 +136,35 @@ export const STARTER_ROUTINES = [
 
 // Equipment list matching the exercise database
 export const COMMON_EQUIPMENT = [
+  // Free Weights
   { id: 'barbell', name: 'Barbell', category: 'free_weights' },
   { id: 'dumbbells', name: 'Dumbbells', category: 'free_weights' },
-  { id: 'bench', name: 'Bench', category: 'benches' },
+  { id: 'ez-bar', name: 'EZ Curl Bar', category: 'free_weights' },
+  { id: 'kettlebell', name: 'Kettlebell', category: 'free_weights' },
+  // Benches
+  { id: 'bench', name: 'Flat Bench', category: 'benches' },
+  { id: 'incline-bench', name: 'Incline Bench', category: 'benches' },
+  { id: 'decline-bench', name: 'Decline Bench', category: 'benches' },
+  { id: 'preacher-bench', name: 'Preacher Bench', category: 'benches' },
+  { id: 'ab-bench', name: 'Ab/Situp Bench', category: 'benches' },
+  // Racks
   { id: 'squat-rack', name: 'Squat Rack', category: 'racks' },
+  { id: 'smith-machine', name: 'Smith Machine', category: 'racks' },
+  // Machines
   { id: 'cable-machine', name: 'Cable Machine', category: 'machines' },
+  { id: 'lat-pulldown-machine', name: 'Lat Pulldown Machine', category: 'machines' },
+  { id: 'chest-press-machine', name: 'Chest Press Machine', category: 'machines' },
+  { id: 'pec-deck-machine', name: 'Pec Deck/Fly Machine', category: 'machines' },
+  { id: 'shoulder-press-machine', name: 'Shoulder Press Machine', category: 'machines' },
   { id: 'leg-press-machine', name: 'Leg Press Machine', category: 'machines' },
+  { id: 'hack-squat-machine', name: 'Hack Squat Machine', category: 'machines' },
   { id: 'leg-extension-machine', name: 'Leg Extension Machine', category: 'machines' },
   { id: 'leg-curl-machine', name: 'Leg Curl Machine', category: 'machines' },
   { id: 'calf-raise-machine', name: 'Calf Raise Machine', category: 'machines' },
+  { id: 'hip-abductor-machine', name: 'Hip Abductor Machine', category: 'machines' },
+  { id: 'hip-adductor-machine', name: 'Hip Adductor Machine', category: 'machines' },
+  { id: 'assisted-pullup-machine', name: 'Assisted Pull-up Machine', category: 'machines' },
+  // Bodyweight
   { id: 'pull-up-bar', name: 'Pull-up Bar', category: 'bodyweight' },
   { id: 'dip-bars', name: 'Dip Bars', category: 'bodyweight' },
 ];

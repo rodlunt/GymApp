@@ -13,15 +13,31 @@ const isBodyweightExercise = (exercise) => {
   return exercise.equipment.some(eq => bwEquipment.includes(eq.toLowerCase()));
 };
 
-export default function CreateRoutineScreen({ navigation }) {
+export default function CreateRoutineScreen({ navigation, route }) {
   const { colors } = useTheme();
-  const { addRoutine } = useWorkout();
+  const { addRoutine, updateRoutine, deleteRoutine } = useWorkout();
   const { muscleGroups, filterExercises } = useExercises();
   const { gymProfiles, activeProfileId } = useGymProfile();
 
-  const [routineName, setRoutineName] = useState('');
-  const [selectedGymId, setSelectedGymId] = useState(activeProfileId || null);
-  const [days, setDays] = useState([{ id: '1', name: '', exercises: [] }]);
+  const editRoutine = route.params?.editRoutine;
+  const isEditing = !!editRoutine;
+
+  const [routineName, setRoutineName] = useState(editRoutine?.name || '');
+  const [selectedGymId, setSelectedGymId] = useState(editRoutine?.gymProfileId || activeProfileId || null);
+  const [days, setDays] = useState(
+    editRoutine?.days?.map(d => ({
+      id: d.id,
+      name: d.name,
+      exercises: d.exercises.map(ex => ({
+        id: ex.id || Date.now().toString() + Math.random(),
+        exerciseId: ex.exerciseId,
+        name: ex.name,
+        sets: ex.sets || 3,
+        isBodyweight: ex.useBodyweight,
+        useBodyweight: ex.useBodyweight || false,
+      })),
+    })) || [{ id: '1', name: '', exercises: [] }]
+  );
 
   // Exercise picker state
   const [showExercisePicker, setShowExercisePicker] = useState(false);
@@ -142,7 +158,7 @@ export default function CreateRoutineScreen({ navigation }) {
     }
 
     const routine = {
-      id: Date.now().toString(),
+      id: isEditing ? editRoutine.id : Date.now().toString(),
       name: routineName.trim(),
       gymProfileId: selectedGymId,
       days: days.map(d => ({
@@ -157,8 +173,19 @@ export default function CreateRoutineScreen({ navigation }) {
       })),
     };
 
-    await addRoutine(routine);
+    if (isEditing) {
+      await updateRoutine(editRoutine.id, routine);
+    } else {
+      await addRoutine(routine);
+    }
     navigation.goBack();
+  };
+
+  const handleDelete = async () => {
+    if (editRoutine) {
+      await deleteRoutine(editRoutine.id);
+      navigation.goBack();
+    }
   };
 
   const renderExerciseItem = ({ item }) => (
@@ -186,7 +213,7 @@ export default function CreateRoutineScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={[styles.cancelText, { color: colors.error }]}>Cancel</Text>
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>New Routine</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{isEditing ? 'Edit Routine' : 'New Routine'}</Text>
         <TouchableOpacity onPress={handleSave}>
           <Text style={[styles.saveText, { color: colors.primary }]}>Save</Text>
         </TouchableOpacity>
@@ -309,6 +336,15 @@ export default function CreateRoutineScreen({ navigation }) {
         >
           <Text style={[styles.addDayText, { color: colors.primary }]}>+ Add Day</Text>
         </TouchableOpacity>
+
+        {isEditing && (
+          <TouchableOpacity
+            style={[styles.deleteButton, { borderColor: colors.error }]}
+            onPress={handleDelete}
+          >
+            <Text style={[styles.deleteButtonText, { color: colors.error }]}>Delete Routine</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
 
       {/* Exercise Picker Modal */}
@@ -519,6 +555,17 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   addDayText: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    alignItems: 'center',
+    marginBottom: spacing.xl,
+  },
+  deleteButtonText: {
     fontSize: fontSize.md,
     fontWeight: '600',
   },

@@ -39,12 +39,13 @@ export default function RoutineListScreen({ navigation }) {
               <TouchableOpacity
                 key={routine.id}
                 style={[styles.routineCard, { backgroundColor: colors.card }]}
+                onPress={() => navigation.navigate('CreateRoutine', { editRoutine: routine })}
               >
                 <Text style={[styles.routineName, { color: colors.text }]}>
                   {routine.name}
                 </Text>
                 <Text style={[styles.routineInfo, { color: colors.textSecondary }]}>
-                  {routine.days.length} day{routine.days.length !== 1 ? 's' : ''}
+                  {routine.days.length} day{routine.days.length !== 1 ? 's' : ''} • Tap to edit
                 </Text>
               </TouchableOpacity>
             ))}

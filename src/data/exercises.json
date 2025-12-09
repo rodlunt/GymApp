@@ -14,9 +14,45 @@
       "name": "Incline Bench Press",
       "primaryMuscles": ["chest"],
       "secondaryMuscles": ["triceps", "shoulders"],
-      "equipment": ["barbell", "bench"],
+      "equipment": ["barbell", "incline-bench"],
       "category": "compound",
       "difficulty": "intermediate"
+    },
+    {
+      "id": "decline-bench-press",
+      "name": "Decline Bench Press",
+      "primaryMuscles": ["chest"],
+      "secondaryMuscles": ["triceps"],
+      "equipment": ["barbell", "decline-bench"],
+      "category": "compound",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "incline-dumbbell-press",
+      "name": "Incline Dumbbell Press",
+      "primaryMuscles": ["chest"],
+      "secondaryMuscles": ["triceps", "shoulders"],
+      "equipment": ["dumbbells", "incline-bench"],
+      "category": "compound",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "decline-dumbbell-press",
+      "name": "Decline Dumbbell Press",
+      "primaryMuscles": ["chest"],
+      "secondaryMuscles": ["triceps"],
+      "equipment": ["dumbbells", "decline-bench"],
+      "category": "compound",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "incline-dumbbell-flyes",
+      "name": "Incline Dumbbell Flyes",
+      "primaryMuscles": ["chest"],
+      "secondaryMuscles": [],
+      "equipment": ["dumbbells", "incline-bench"],
+      "category": "isolation",
+      "difficulty": "beginner"
     },
     {
       "id": "dumbbell-bench-press",
@@ -55,6 +91,42 @@
       "difficulty": "intermediate"
     },
     {
+      "id": "machine-chest-press",
+      "name": "Machine Chest Press",
+      "primaryMuscles": ["chest"],
+      "secondaryMuscles": ["triceps", "shoulders"],
+      "equipment": ["chest-press-machine"],
+      "category": "compound",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "pec-deck-fly",
+      "name": "Pec Deck Fly",
+      "primaryMuscles": ["chest"],
+      "secondaryMuscles": [],
+      "equipment": ["pec-deck-machine"],
+      "category": "isolation",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "smith-machine-bench-press",
+      "name": "Smith Machine Bench Press",
+      "primaryMuscles": ["chest"],
+      "secondaryMuscles": ["triceps", "shoulders"],
+      "equipment": ["smith-machine", "bench"],
+      "category": "compound",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "smith-machine-incline-press",
+      "name": "Smith Machine Incline Press",
+      "primaryMuscles": ["chest"],
+      "secondaryMuscles": ["triceps", "shoulders"],
+      "equipment": ["smith-machine", "incline-bench"],
+      "category": "compound",
+      "difficulty": "beginner"
+    },
+    {
       "id": "squat",
       "name": "Squat",
       "primaryMuscles": ["quadriceps"],
@@ -82,11 +154,47 @@
       "difficulty": "beginner"
     },
     {
+      "id": "kettlebell-swing",
+      "name": "Kettlebell Swing",
+      "primaryMuscles": ["glutes"],
+      "secondaryMuscles": ["hamstrings", "core", "shoulders"],
+      "equipment": ["kettlebell"],
+      "category": "compound",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "kettlebell-goblet-squat",
+      "name": "Kettlebell Goblet Squat",
+      "primaryMuscles": ["quadriceps"],
+      "secondaryMuscles": ["glutes", "core"],
+      "equipment": ["kettlebell"],
+      "category": "compound",
+      "difficulty": "beginner"
+    },
+    {
       "id": "leg-press",
       "name": "Leg Press",
       "primaryMuscles": ["quadriceps"],
       "secondaryMuscles": ["glutes", "hamstrings"],
       "equipment": ["leg-press-machine"],
+      "category": "compound",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "hack-squat",
+      "name": "Hack Squat",
+      "primaryMuscles": ["quadriceps"],
+      "secondaryMuscles": ["glutes"],
+      "equipment": ["hack-squat-machine"],
+      "category": "compound",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "smith-machine-squat",
+      "name": "Smith Machine Squat",
+      "primaryMuscles": ["quadriceps"],
+      "secondaryMuscles": ["glutes", "hamstrings"],
+      "equipment": ["smith-machine"],
       "category": "compound",
       "difficulty": "beginner"
     },
@@ -172,6 +280,24 @@
       "difficulty": "intermediate"
     },
     {
+      "id": "assisted-pull-ups",
+      "name": "Assisted Pull-ups",
+      "primaryMuscles": ["back"],
+      "secondaryMuscles": ["biceps"],
+      "equipment": ["assisted-pullup-machine"],
+      "category": "compound",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "machine-lat-pulldown",
+      "name": "Machine Lat Pulldown",
+      "primaryMuscles": ["back"],
+      "secondaryMuscles": ["biceps"],
+      "equipment": ["lat-pulldown-machine"],
+      "category": "compound",
+      "difficulty": "beginner"
+    },
+    {
       "id": "lat-pulldown",
       "name": "Lat Pulldown",
       "primaryMuscles": ["back"],
@@ -253,6 +379,24 @@
       "difficulty": "beginner"
     },
     {
+      "id": "machine-shoulder-press",
+      "name": "Machine Shoulder Press",
+      "primaryMuscles": ["shoulders"],
+      "secondaryMuscles": ["triceps"],
+      "equipment": ["shoulder-press-machine"],
+      "category": "compound",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "smith-machine-shoulder-press",
+      "name": "Smith Machine Shoulder Press",
+      "primaryMuscles": ["shoulders"],
+      "secondaryMuscles": ["triceps"],
+      "equipment": ["smith-machine"],
+      "category": "compound",
+      "difficulty": "beginner"
+    },
+    {
       "id": "front-raises",
       "name": "Front Raises",
       "primaryMuscles": ["shoulders"],
@@ -294,6 +438,33 @@
       "primaryMuscles": ["biceps"],
       "secondaryMuscles": ["forearms"],
       "equipment": ["dumbbells"],
+      "category": "isolation",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "preacher-curl",
+      "name": "Preacher Curl",
+      "primaryMuscles": ["biceps"],
+      "secondaryMuscles": [],
+      "equipment": ["ez-bar", "preacher-bench"],
+      "category": "isolation",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "dumbbell-preacher-curl",
+      "name": "Dumbbell Preacher Curl",
+      "primaryMuscles": ["biceps"],
+      "secondaryMuscles": [],
+      "equipment": ["dumbbells", "preacher-bench"],
+      "category": "isolation",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "ez-bar-curl",
+      "name": "EZ Bar Curl",
+      "primaryMuscles": ["biceps"],
+      "secondaryMuscles": ["forearms"],
+      "equipment": ["ez-bar"],
       "category": "isolation",
       "difficulty": "beginner"
     },
@@ -388,6 +559,24 @@
       "difficulty": "beginner"
     },
     {
+      "id": "hip-abduction",
+      "name": "Hip Abduction Machine",
+      "primaryMuscles": ["glutes"],
+      "secondaryMuscles": [],
+      "equipment": ["hip-abductor-machine"],
+      "category": "isolation",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "hip-adduction",
+      "name": "Hip Adduction Machine",
+      "primaryMuscles": ["glutes"],
+      "secondaryMuscles": [],
+      "equipment": ["hip-adductor-machine"],
+      "category": "isolation",
+      "difficulty": "beginner"
+    },
+    {
       "id": "cable-kickback",
       "name": "Cable Kickback",
       "primaryMuscles": ["glutes"],
@@ -413,6 +602,33 @@
       "equipment": ["bodyweight"],
       "category": "isolation",
       "difficulty": "beginner"
+    },
+    {
+      "id": "decline-situps",
+      "name": "Decline Situps",
+      "primaryMuscles": ["core"],
+      "secondaryMuscles": [],
+      "equipment": ["ab-bench"],
+      "category": "isolation",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "decline-crunches",
+      "name": "Decline Crunches",
+      "primaryMuscles": ["core"],
+      "secondaryMuscles": [],
+      "equipment": ["ab-bench"],
+      "category": "isolation",
+      "difficulty": "beginner"
+    },
+    {
+      "id": "decline-russian-twist",
+      "name": "Decline Russian Twist",
+      "primaryMuscles": ["core"],
+      "secondaryMuscles": [],
+      "equipment": ["ab-bench"],
+      "category": "isolation",
+      "difficulty": "intermediate"
     },
     {
       "id": "hanging-leg-raises",
@@ -495,15 +711,30 @@
   "equipmentList": [
     { "id": "barbell", "name": "Barbell" },
     { "id": "dumbbells", "name": "Dumbbells" },
-    { "id": "bench", "name": "Bench" },
+    { "id": "ez-bar", "name": "EZ Curl Bar" },
+    { "id": "kettlebell", "name": "Kettlebell" },
+    { "id": "bench", "name": "Flat Bench" },
+    { "id": "incline-bench", "name": "Incline Bench" },
+    { "id": "decline-bench", "name": "Decline Bench" },
+    { "id": "preacher-bench", "name": "Preacher Bench" },
+    { "id": "ab-bench", "name": "Ab/Situp Bench" },
     { "id": "squat-rack", "name": "Squat Rack" },
+    { "id": "smith-machine", "name": "Smith Machine" },
     { "id": "pull-up-bar", "name": "Pull-up Bar" },
+    { "id": "dip-bars", "name": "Dip Bars" },
     { "id": "cable-machine", "name": "Cable Machine" },
+    { "id": "lat-pulldown-machine", "name": "Lat Pulldown Machine" },
+    { "id": "chest-press-machine", "name": "Chest Press Machine" },
+    { "id": "pec-deck-machine", "name": "Pec Deck/Fly Machine" },
+    { "id": "shoulder-press-machine", "name": "Shoulder Press Machine" },
     { "id": "leg-press-machine", "name": "Leg Press Machine" },
+    { "id": "hack-squat-machine", "name": "Hack Squat Machine" },
     { "id": "leg-extension-machine", "name": "Leg Extension Machine" },
     { "id": "leg-curl-machine", "name": "Leg Curl Machine" },
     { "id": "calf-raise-machine", "name": "Calf Raise Machine" },
-    { "id": "dip-bars", "name": "Dip Bars" },
+    { "id": "hip-abductor-machine", "name": "Hip Abductor Machine" },
+    { "id": "hip-adductor-machine", "name": "Hip Adductor Machine" },
+    { "id": "assisted-pullup-machine", "name": "Assisted Pull-up Machine" },
     { "id": "bodyweight", "name": "Bodyweight (No Equipment)" }
   ]
 }

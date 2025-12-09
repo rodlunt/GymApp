@@ -1,28 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dir:*)",
-      "Bash(findstr:*)",
-      "Bash(git init:*)",
-      "Bash(npx create-expo-app@latest . --template blank --yes)",
-      "Bash(cat:*)",
-      "Bash(npm install:*)",
-      "Bash(gh auth status:*)",
-      "Bash(git --version:*)",
-      "Bash(where:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git config:*)",
-      "Bash(git remote add:*)",
-      "Bash(git branch:*)",
-      "Bash(git push:*)",
-      "Bash(netstat:*)",
-      "Bash(claude mcp list:*)",
-      "Bash(claude mcp add)",
-      "Bash(npm start)",
-      "Bash(cd /d d:GymApp)",
-      "Bash(npm start -- --clear)",
-      "Bash(npx expo start:*)"
+      "Bash(node:*)",
+      "Bash(cd:*)",
+      "Bash(npm ls:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npx eas-cli:*)"
     ],
     "deny": [],
     "ask": []
