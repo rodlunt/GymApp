@@ -1,0 +1,15 @@
+Initial release of Clean Reps - a simple workout tracker with no subscriptions, no ads, and no account required.
+
+Features:
+• Log sets, reps, and weights for any exercise
+• Create custom routines that match your training style
+• Set up multiple gym profiles with different equipment
+• Automatic personal record tracking
+• Estimated 1RM charts to track strength progress
+• Weekly volume stats and 4-week trends
+• Smart scheduling - the app knows which workout day is next
+• Works completely offline
+• Dark mode support
+• Choose between kg and lbs
+
+All data stays on your device. No servers, no tracking, no analytics.

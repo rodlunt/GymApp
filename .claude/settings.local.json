@@ -28,7 +28,15 @@
       "Bash(\"C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\keytool.exe\" -list -keystore \"D:\\GymApp\\android\\app\\release.keystore\" -storepass \"cleanreps123\")",
       "Bash(del \"D:\\GymApp\\android\\app\\release.keystore\")",
       "Bash(\"C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\keytool.exe\" -genkeypair -v -storetype PKCS12 -keystore \"D:\\GymApp\\android\\app\\release.keystore\" -alias cleanreps -keyalg RSA -keysize 2048 -validity 9125 -storepass CleanReps2025Secure -keypass CleanReps2025Secure -dname \"CN=Clean Reps, OU=Mobile, O=CleanReps, L=City, ST=State, C=US\")",
-      "Bash(\"C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\keytool.exe\":*)"
+      "Bash(\"C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\keytool.exe\":*)",
+      "Bash(cmd /c \"cd /d d:\\GymApp && npx expo prebuild --platform android --clean\")",
+      "Bash(npx expo prebuild:*)",
+      "Bash(\"C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\keytool.exe\" -genkeypair -v -storetype PKCS12 -keystore \"D:\\GymApp\\android\\app\\release.keystore\" -alias cleanreps -keyalg RSA -keysize 2048 -validity 9125 -storepass CleanReps2025Key -keypass CleanReps2025Key -dname \"CN=Clean Reps, OU=Mobile, O=CleanReps, L=City, ST=State, C=AU\")",
+      "Bash(cmd /c \"set JAVA_HOME=C:\\Program Files\\Android\\Android Studio\\jbr && cd /d D:\\GymApp\\android && gradlew.bat bundleRelease\")",
+      "Bash(D:GymAppandroidgradlew.bat -p D:GymAppandroid bundleRelease)",
+      "Bash(\"C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\keytool.exe\" -list -keystore \"D:\\GymApp\\android\\app\\release.keystore\" -storepass CleanReps2025Key)",
+      "Bash(\"C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\keytool.exe\" -list -keystore \"D:\\GymApp\\android\\app\\release.keystore\" -storepass Cr3ps_Gym_2025_SecureKey)",
+      "Bash(\"C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\keytool.exe\" -list -v -keystore \"D:\\GymApp\\android\\app\\release.keystore\" -storepass Cr3ps_Gym_2025_SecureKey)"
     ],
     "deny": [],
     "ask": []
