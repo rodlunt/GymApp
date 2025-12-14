@@ -77,6 +77,11 @@ export default function TabNavigator() {
             <TabIcon name="Settings" focused={focused} color={color} />
           ),
         }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            navigation.navigate('Settings', { screen: 'SettingsHome' });
+          },
+        })}
       />
     </Tab.Navigator>
   );

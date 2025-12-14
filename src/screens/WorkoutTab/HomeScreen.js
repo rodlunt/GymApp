@@ -205,7 +205,7 @@ export default function HomeScreen({ navigation }) {
       {!showGymPrompt && (
         <TouchableOpacity
           style={[styles.gymQuickAccess, { backgroundColor: colors.card }, shadows.sm]}
-          onPress={() => navigation.navigate('Settings')}
+          onPress={() => navigation.navigate('Settings', { screen: 'SettingsHome' })}
         >
           <Text style={[styles.gymQuickLabel, { color: colors.textSecondary }]}>
             GYM PROFILE

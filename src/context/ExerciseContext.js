@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import exerciseData from '../data/exercises.json';
-import wgerApi from '../services/wgerApi';
+import exerciseImageApi from '../services/exerciseImageApi';
 
 const ExerciseContext = createContext();
 
@@ -28,7 +28,7 @@ export function ExerciseProvider({ children }) {
     setLoadingImages(prev => ({ ...prev, [exerciseId]: true }));
 
     try {
-      const imageUrl = await wgerApi.getImageForExercise(exerciseId);
+      const imageUrl = await exerciseImageApi.getImageForExercise(exerciseId);
       setExerciseImages(prev => ({ ...prev, [exerciseId]: imageUrl }));
       return imageUrl;
     } catch (error) {
@@ -45,7 +45,7 @@ export function ExerciseProvider({ children }) {
     const missing = exerciseIds.filter(id => exerciseImages[id] === undefined);
     if (missing.length === 0) return;
 
-    const images = await wgerApi.getImagesForExercises(missing);
+    const images = await exerciseImageApi.getImagesForExercises(missing);
     setExerciseImages(prev => ({ ...prev, ...images }));
   }, [exerciseImages]);
 
@@ -54,7 +54,7 @@ export function ExerciseProvider({ children }) {
     setLoadingImages(prev => ({ ...prev, [exerciseId]: true }));
 
     try {
-      const imageUrl = await wgerApi.refreshExerciseImage(exerciseId);
+      const imageUrl = await exerciseImageApi.refreshExerciseImage(exerciseId);
       setExerciseImages(prev => ({ ...prev, [exerciseId]: imageUrl }));
       return imageUrl;
     } catch (error) {

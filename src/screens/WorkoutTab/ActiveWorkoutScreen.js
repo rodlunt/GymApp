@@ -25,7 +25,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
   const { colors, isDark } = useTheme();
   const shadows = isDark ? shadowsDark : shadowsLight;
   const { workoutHistory, saveWorkoutSession, personalBests } = useWorkout();
-  const { getExerciseById, exerciseImages, getExerciseImage, refreshExerciseImage, loadingImages } = useExercises();
+  const { getExerciseById, exerciseImages, getExerciseImage } = useExercises();
   const { units, displayWeight, toStorageWeight } = useSettings();
   const routine = route.params?.routine;
   const day = route.params?.day;
@@ -120,10 +120,9 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
   // Get full exercise data from database
   const exerciseData = currentExercise ? getExerciseById(currentExercise.exerciseId) : null;
 
-  // Get exercise image from wger.de
+  // Get exercise image
   const currentExerciseId = currentExercise?.exerciseId;
   const exerciseImageUrl = exerciseImages[currentExerciseId];
-  const isRefreshingImage = loadingImages[currentExerciseId];
 
   // Fetch image when modal opens or exercise changes
   useEffect(() => {
@@ -134,13 +133,6 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
       });
     }
   }, [showImageModal, currentExerciseId, exerciseImageUrl, getExerciseImage]);
-
-  // Handle refresh image
-  const handleRefreshImage = async () => {
-    if (currentExerciseId && !isRefreshingImage) {
-      await refreshExerciseImage(currentExerciseId);
-    }
-  };
 
   // Early return if no exercise data
   if (!currentExercise) {
@@ -383,7 +375,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
               </View>
             ) : exerciseImageUrl ? (
               <View style={styles.imageContainer}>
-                {(imageLoading || isRefreshingImage) && (
+                {imageLoading && (
                   <ActivityIndicator
                     size="large"
                     color={colors.primary}
@@ -392,20 +384,11 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                 )}
                 <Image
                   source={{ uri: exerciseImageUrl }}
-                  style={[styles.exerciseImage, isRefreshingImage && { opacity: 0.5 }]}
+                  style={styles.exerciseImage}
                   resizeMode="contain"
                   onLoadStart={() => setImageLoading(true)}
                   onLoadEnd={() => setImageLoading(false)}
                 />
-                <TouchableOpacity
-                  style={[styles.refreshButton, { backgroundColor: colors.background }]}
-                  onPress={handleRefreshImage}
-                  disabled={isRefreshingImage}
-                >
-                  <Text style={[styles.refreshButtonText, { color: colors.primary }]}>
-                    {isRefreshingImage ? 'Refreshing...' : 'Wrong image? Tap to refresh'}
-                  </Text>
-                </TouchableOpacity>
               </View>
             ) : (
               <View style={[styles.imagePlaceholder, { backgroundColor: colors.background }]}>
@@ -610,15 +593,5 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: fontSize.md,
     fontWeight: '600',
-  },
-  refreshButton: {
-    marginTop: spacing.sm,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
-  },
-  refreshButtonText: {
-    fontSize: fontSize.xs,
-    textAlign: 'center',
   },
 });
