@@ -38,7 +38,8 @@
       "Bash(\"C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\keytool.exe\" -list -keystore \"D:\\GymApp\\android\\app\\release.keystore\" -storepass Cr3ps_Gym_2025_SecureKey)",
       "Bash(\"C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\keytool.exe\" -list -v -keystore \"D:\\GymApp\\android\\app\\release.keystore\" -storepass Cr3ps_Gym_2025_SecureKey)",
       "Bash(java -version:*)",
-      "Bash(\"C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\java.exe\" -version)"
+      "Bash(\"C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\java.exe\" -version)",
+      "Bash(cmd /c \"cd /d D:\\\\GymApp && npx expo prebuild --platform android\")"
     ],
     "deny": [],
     "ask": []
