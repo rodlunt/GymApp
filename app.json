@@ -2,7 +2,7 @@
   "expo": {
     "name": "Clean Reps",
     "slug": "clean-reps",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "default",
     "icon": "./assets/logo-light.png",
     "userInterfaceStyle": "automatic",
@@ -33,11 +33,31 @@
           "android": {
             "kotlinVersion": "2.0.21",
             "targetSdkVersion": 35,
-            "compileSdkVersion": 35
+            "compileSdkVersion": 35,
+            "useLegacyPackaging": false,
+            "enableProguardInReleaseBuilds": true,
+            "extraProguardRules": "-keep class com.cleanreps.** { *; }"
           }
         }
-      ]
+      ],
+      [
+        "expo-navigation-bar",
+        {
+          "position": "absolute",
+          "visibility": "visible",
+          "behavior": "overlay-swipe"
+        }
+      ],
+      "react-native-edge-to-edge"
     ],
+    "androidStatusBar": {
+      "barStyle": "light-content",
+      "translucent": true
+    },
+    "androidNavigationBar": {
+      "visible": "sticky-immersive",
+      "barStyle": "light-content"
+    },
     "extra": {
       "eas": {
         "projectId": "aaa2b1ad-8339-4b3b-819c-023ae6fe85f8"
